@@ -577,10 +577,6 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    @keyframes slideInUp {
-      from { transform: translateY(50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
     .slide-content {
       max-width: 1200px;
       width: 100%;
@@ -836,6 +832,7 @@
           <div class="comparison-item">
             <h3 class="comparison-title">Сравнение с отраслью</h3>
             <div class="chart-container">
+              <button class="fullscreen-btn" data-chart="industryComparisonChart"><i class="fas fa-expand"></i></button>
               <canvas id="industryComparisonChart"></canvas>
             </div>
           </div>
@@ -974,10 +971,8 @@
             </table>
           </div>
         </div>
-        <div data-aos="fade-up" data-aos-delay="400">
-          <p>Выручка компании демонстрирует стабильный рост на протяжении всего периода. Среднегодовой темп роста (CAGR) составил 12.2%.</p>
-          <p>Наибольший прирост наблюдался в 2018 году (+18.2%), что связано с успешной региональной экспансией и расширением клиентской базы.</p>
-        </div>
+        <p data-aos="fade-up" data-aos-delay="400">Выручка компании демонстрирует стабильный рост на протяжении всего периода. Среднегодовой темп роста (CAGR) составил 12.2%.</p>
+        <p data-aos="fade-up" data-aos-delay="400">Наибольший прирост наблюдался в 2018 году (+18.2%), что связано с успешной региональной экспансией и расширением клиентской базы.</p>
       </div>
     </section>
     <!-- EBITDA -->
@@ -1054,10 +1049,8 @@
             </table>
           </div>
         </div>
-        <div data-aos="fade-up" data-aos-delay="400">
-          <p>EBITDA компании выросла на 150% за период с 2016 по 2022 год. Маржа EBITDA увеличилась с 12% до 15%.</p>
-          <p>Наиболее значительный рост показателя наблюдался в 2017 и 2020 годах, что связано с оптимизацией операционных процессов и внедрением новых технологических решений.</p>
-        </div>
+        <p data-aos="fade-up" data-aos-delay="400">EBITDA компании выросла на 150% за период с 2016 по 2022 год. Маржа EBITDA увеличилась с 12% до 15%.</p>
+        <p data-aos="fade-up" data-aos-delay="400">Наиболее значительный рост показателя наблюдался в 2017 и 2020 годах, что связано с оптимизацией операционных процессов и внедрением новых технологических решений.</p>
       </div>
     </section>
     <!-- Разбивка по направлениям -->
@@ -1225,8 +1218,8 @@
       </div>
     </section>
     <!-- Навигационные кнопки -->
-    <button class="nav-btn nav-prev" aria-label="Предыдущий слайд"><i class="fas fa-arrow-left"></i> Назад</button>
-    <button class="nav-btn nav-next" aria-label="Следующий слайд">Вперед <i class="fas fa-arrow-right"></i></button>
+    <button class="nav-btn nav-prev" aria-label="Предыдущий слайд" onclick="prevSlide()"><i class="fas fa-arrow-left"></i> Назад</button>
+    <button class="nav-btn nav-next" aria-label="Следующий слайд" onclick="nextSlide()">Вперед <i class="fas fa-arrow-right"></i></button>
     <!-- Индикатор слайдов -->
     <div class="dot-indicator" id="dots"></div>
     <!-- Оверлей для графиков -->
@@ -1245,740 +1238,710 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels @2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
   <script>
+    // Глобальные функции
+    let current = 0;
+    let slides = [];
+
     // Инициализация AOS
     document.addEventListener('DOMContentLoaded', function() {
       AOS.init({
         duration: 800,
         once: true
       });
-
-      // Переменные
-      const slides = document.querySelectorAll('.slide');
-      const container = document.getElementById('presentation-container');
-      let current = 0;
-      let isScrolling = false;
-
-      // Функция отображения слайда
-      function showSlide(index) {
-        if (index < 0) index = 0;
-        if (index >= slides.length) index = slides.length - 1;
-        current = index;
-        slides.forEach(slide => slide.classList.remove('active'));
-        slides[index].classList.add('active');
-        updateDots();
-        updateLoadingBar();
-      }
-
-      // Создание индикаторов
-      function createDots() {
-        const dotsContainer = document.getElementById('dots');
-        dotsContainer.innerHTML = '';
-        slides.forEach((slide, i) => {
-          const dot = document.createElement('div');
-          dot.className = 'dot' + (i === current ? ' active' : '');
-          const heading = slide.querySelector('h1, h2');
-          const tooltipText = heading ? heading.textContent : `Слайд ${i+1}`;
-          if (window.innerWidth > 768) {
-            dot.setAttribute('data-tooltip', tooltipText);
-          }
-          dot.onclick = () => showSlide(i);
-          dotsContainer.appendChild(dot);
-        });
-      }
-
-      // Обновление спиннера графиков
-      function initCharts() {
-        document.querySelectorAll('.chart-container').forEach(container => {
-          const loader = document.createElement('div');
-          loader.className = 'chart-loader';
-          container.appendChild(loader);
-        });
-
-        // Настройки Chart.js
-        Chart.defaults.font.family = 'Roboto, sans-serif';
-        Chart.defaults.color = '#002D6B';
-
-        // График выручки (линейный)
-        new Chart(document.getElementById('revenueChart'), {
-          type: 'line',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
-            datasets: [{
-              label: 'Выручка, млн руб.',
-              data: [100, 110, 130, 145, 160, 180, 200],
-              borderColor: '#00A8E8',
-              backgroundColor: 'rgba(0, 168, 232, 0.1)',
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: '#00A8E8',
-              pointRadius: 5,
-              pointHoverRadius: 7
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                titleFont: { weight: 'bold' },
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + ' млн руб.';
-                  }
-                }
-              },
-              datalabels: {
-                color: '#002D6B',
-                anchor: 'end',
-                align: 'top',
-                formatter: function(value) {
-                  return value + ' млн';
-                },
-                font: { weight: 'bold' }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Млн рублей'
-                }
-              }
-            }
-          }
-        });
-
-        // График выручки (столбчатый)
-        new Chart(document.getElementById('revenueBarChart'), {
-          type: 'bar',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
-            datasets: [{
-              label: 'Выручка, млн руб.',
-              data: [100, 110, 130, 145, 160, 180, 200],
-              backgroundColor: '#00A8E8',
-              borderRadius: 5
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + ' млн руб.';
-                  }
-                }
-              },
-              datalabels: {
-                color: '#002D6B',
-                anchor: 'end',
-                align: 'top',
-                formatter: function(value) {
-                  return value;
-                },
-                font: { weight: 'bold' }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Млн рублей'
-                }
-              }
-            }
-          }
-        });
-
-        // График EBITDA (столбчатый)
-        new Chart(document.getElementById('ebitdaChart'), {
-          type: 'bar',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
-            datasets: [{
-              label: 'EBITDA, млн руб.',
-              data: [12, 15, 18, 20, 24, 28, 30],
-              backgroundColor: '#00A8E8',
-              borderRadius: 5
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + ' млн руб.';
-                  }
-                }
-              },
-              datalabels: {
-                color: '#002D6B',
-                anchor: 'end',
-                align: 'top',
-                formatter: function(value) {
-                  return value;
-                },
-                font: { weight: 'bold' }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Млн рублей'
-                }
-              }
-            }
-          }
-        });
-
-        // График EBITDA (линейный)
-        new Chart(document.getElementById('ebitdaLineChart'), {
-          type: 'line',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
-            datasets: [{
-              label: 'EBITDA, млн руб.',
-              data: [12, 15, 18, 20, 24, 28, 30],
-              borderColor: '#00A8E8',
-              backgroundColor: 'rgba(0, 168, 232, 0.1)',
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: '#00A8E8',
-              pointRadius: 5,
-              pointHoverRadius: 7
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + ' млн руб.';
-                  }
-                }
-              },
-              datalabels: {
-                color: '#002D6B',
-                anchor: 'end',
-                align: 'top',
-                formatter: function(value) {
-                  return value + ' млн';
-                },
-                font: { weight: 'bold' }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Млн рублей'
-                }
-              }
-            }
-          }
-        });
-
-        // Круговой график разбивки по направлениям
-        new Chart(document.getElementById('pieChart'), {
-          type: 'doughnut',
-          data: {
-            labels: ['Складская логистика', 'Транспортная логистика'],
-            datasets: [{
-              data: [65, 35],
-              backgroundColor: ['#002D6B', '#00A8E8'],
-              borderWidth: 0
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '50%',
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  padding: 20,
-                  font: {
-                    size: 14
-                  }
-                }
-              },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.label + ': ' + context.raw + '%';
-                  }
-                }
-              },
-              datalabels: {
-                color: '#fff',
-                formatter: function(value) {
-                  return value + '%';
-                },
-                font: {
-                  weight: 'bold',
-                  size: 16
-                }
-              }
-            }
-          }
-        });
-
-        // График тренда по направлениям
-        new Chart(document.getElementById('directionTrendChart'), {
-          type: 'line',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
-            datasets: [
-              {
-                label: 'Складская логистика',
-                data: [60, 62, 63, 64, 65, 65, 65],
-                borderColor: '#002D6B',
-                backgroundColor: 'rgba(0, 45, 107, 0.1)',
-                tension: 0.4,
-                fill: true
-              },
-              {
-                label: 'Транспортная логистика',
-                data: [40, 38, 37, 36, 35, 35, 35],
-                borderColor: '#00A8E8',
-                backgroundColor: 'rgba(0, 168, 232, 0.1)',
-                tension: 0.4,
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + '%';
-                  }
-                }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Доля в выручке, %',
-                  max: 100
-                }
-              }
-            }
-          }
-        });
-
-        // График сравнения с отраслью
-        new Chart(document.getElementById('industryComparisonChart'), {
-          type: 'radar',
-          data: {
-            labels: ['Рост выручки', 'Маржинальность', 'Эффективность', 'Инновации', 'Клиентский сервис'],
-            datasets: [
-              {
-                label: 'BG LOGISTIC',
-                data: [85, 80, 75, 90, 85],
-                backgroundColor: 'rgba(0, 168, 232, 0.2)',
-                borderColor: '#00A8E8',
-                pointBackgroundColor: '#00A8E8',
-                pointRadius: 4
-              },
-              {
-                label: 'Среднее по отрасли',
-                data: [70, 65, 60, 65, 70],
-                backgroundColor: 'rgba(0, 45, 107, 0.2)',
-                borderColor: '#002D6B',
-                pointBackgroundColor: '#002D6B',
-                pointRadius: 4
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              r: {
-                angleLines: { display: true },
-                suggestedMin: 0,
-                suggestedMax: 100
-              }
-            },
-            plugins: {
-              legend: { position: 'bottom' }
-            }
-          }
-        });
-
-        // График маржинальности
-        new Chart(document.getElementById('marginChart'), {
-          type: 'line',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
-            datasets: [
-              {
-                label: 'Рентабельность продаж, %',
-                data: [8, 8.5, 9, 10, 10.5, 11.5, 12],
-                borderColor: '#002D6B',
-                backgroundColor: 'rgba(0, 45, 107, 0.1)',
-                tension: 0.4,
-                fill: true,
-                yAxisID: 'y'
-              },
-              {
-                label: 'EBITDA Margin, %',
-                data: [12, 13.6, 13.8, 13.8, 15, 15.6, 15],
-                borderColor: '#00A8E8',
-                backgroundColor: 'rgba(0, 168, 232, 0.1)',
-                tension: 0.4,
-                fill: true,
-                yAxisID: 'y'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-              mode: 'index',
-              intersect: false
-            },
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + '%';
-                  }
-                }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Процент, %',
-                  max: 20
-                }
-              }
-            }
-          }
-        });
-
-        // График структуры затрат
-        new Chart(document.getElementById('costChart'), {
-          type: 'bar',
-          data: {
-            labels: ['2016', '2022'],
-            datasets: [
-              {
-                label: 'Персонал',
-                data: [35, 30],
-                backgroundColor: '#002D6B'
-              },
-              {
-                label: 'Аренда',
-                data: [25, 20],
-                backgroundColor: '#00A8E8'
-              },
-              {
-                label: 'Транспорт',
-                data: [20, 25],
-                backgroundColor: '#4CAF50'
-              },
-              {
-                label: 'ИТ и автоматизация',
-                data: [5, 15],
-                backgroundColor: '#FFC107'
-              },
-              {
-                label: 'Прочие расходы',
-                data: [15, 10],
-                backgroundColor: '#9C27B0'
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + '%';
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                stacked: true,
-                title: {
-                  display: true,
-                  text: 'Год'
-                }
-              },
-              y: {
-                stacked: true,
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Доля в структуре затрат, %',
-                  max: 100
-                }
-              }
-            }
-          }
-        });
-
-        // График прогноза
-        new Chart(document.getElementById('forecastChart'), {
-          type: 'line',
-          data: {
-            labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023*', '2024*'],
-            datasets: [{
-              label: 'Выручка, млн руб.',
-              data: [100, 110, 130, 145, 160, 180, 200, 230, 260],
-              borderColor: '#00A8E8',
-              backgroundColor: 'rgba(0, 168, 232, 0.1)',
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: function(context) {
-                return context.dataIndex > 6 ? '#FFC107' : '#00A8E8';
-              },
-              pointRadius: function(context) {
-                return context.dataIndex > 6 ? 6 : 5;
-              },
-              pointStyle: function(context) {
-                return context.dataIndex > 6 ? 'triangle' : 'circle';
-              }
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true, position: 'top' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.dataset.label + ': ' + context.raw + ' млн руб.' + (context.dataIndex > 6 ? ' (прогноз)' : '');
-                  }
-                }
-              },
-              datalabels: {
-                color: function(context) {
-                  return context.dataIndex > 6 ? '#FFC107' : '#002D6B';
-                },
-                anchor: 'end',
-                align: 'top',
-                formatter: function(value, context) {
-                  return value + (context.dataIndex > 6 ? '*' : '');
-                },
-                font: { weight: 'bold' }
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Млн рублей'
-                }
-              }
-            }
-          }
-        });
-
-        // График стратегии
-        new Chart(document.getElementById('strategyChart'), {
-          type: 'polarArea',
-          data: {
-            labels: ['Рост выручки', 'Повышение маржинальности', 'Расширение географии', 'Новые услуги', 'Цифровизация'],
-            datasets: [{
-              data: [30, 25, 15, 10, 20],
-              backgroundColor: [
-                '#00A8E8',
-                '#002D6B',
-                '#4CAF50',
-                '#FFC107',
-                '#9C27B0'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'right' },
-              tooltip: {
-                backgroundColor: 'rgba(0, 45, 107, 0.8)',
-                callbacks: {
-                  label: function(context) {
-                    return context.label + ': ' + context.raw + ' % приоритета';
-                  }
-                }
-              },
-              datalabels: {
-                color: '#fff',
-                formatter: function(value) {
-                  return value + '%';
-                },
-                font: { weight: 'bold' }
-              }
-            }
-          }
-        });
-      }
-
-      // Функция отображения слайда
-      function showSlide(index) {
-        if (index < 0) index = 0;
-        if (index >= slides.length) index = slides.length - 1;
-        current = index;
-        slides.forEach(slide => slide.classList.remove('active'));
-        slides[index].classList.add('active');
-        updateDots();
-        updateLoadingBar();
-      }
-
-      // Создание индикаторов
-      function createDots() {
-        const dotsContainer = document.getElementById('dots');
-        dotsContainer.innerHTML = '';
-        slides.forEach((slide, i) => {
-          const dot = document.createElement('div');
-          dot.className = 'dot' + (i === current ? ' active' : '');
-          const heading = slide.querySelector('h1, h2');
-          const tooltipText = heading ? heading.textContent : `Слайд ${i+1}`;
-          if (window.innerWidth > 768) {
-            dot.setAttribute('data-tooltip', tooltipText);
-          }
-          dot.onclick = () => showSlide(i);
-          dotsContainer.appendChild(dot);
-        });
-      }
-
-      // Обновление индикаторов
-      function updateDots() {
-        const dots = document.querySelectorAll('.dot');
-        dots.forEach((dot, i) => {
-          dot.classList.toggle('active', i === current);
-        });
-      }
-
-      // Обновление прогресс-бара
-      function updateLoadingBar() {
-        const progress = (current / (slides.length - 1)) * 100;
-        document.getElementById('loadingBar').style.width = progress + '%';
-      }
-
-      // Обработка клавиш
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-          nextSlide();
-        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-          prevSlide();
-        }
-      });
-
-      // Переключение вкладок графиков
-      function setupChartTabs() {
-        document.querySelectorAll('.chart-tab').forEach(tab => {
-          tab.addEventListener('click', () => {
-            const target = tab.getAttribute('data-target');
-            const tabGroup = tab.parentElement;
-            tabGroup.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            document.querySelectorAll('.chart-view').forEach(view => {
-              view.classList.remove('active');
-            });
-            document.getElementById(target).classList.add('active');
-          });
-        });
-      }
-
-      // Переключение представлений
-      function setupToggleView() {
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const target = btn.getAttribute('data-target');
-            btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.view-container').forEach(container => {
-              container.classList.remove('active');
-            });
-            document.getElementById(target).classList.add('active');
-          });
-        });
-      }
-
-      // Полноэкранный режим графиков
-      function setupFullscreenCharts() {
-        document.querySelectorAll('.fullscreen-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const chartId = btn.getAttribute('data-chart');
-            const originalCanvas = document.getElementById(chartId);
-            if (Chart.getChart(chartId)) {
-              const chartConfig = Chart.getChart(chartId).config;
-              const overlayContainer = document.getElementById('overlayChartContainer');
-              overlayContainer.innerHTML = '';
-              const newCanvas = document.createElement('canvas');
-              newCanvas.id = 'overlayChart';
-              overlayContainer.appendChild(newCanvas);
-              new Chart(newCanvas, chartConfig);
-              document.getElementById('chartOverlay').classList.add('active');
-            }
-          });
-        });
-        document.getElementById('closeOverlay').addEventListener('click', () => {
-          document.getElementById('chartOverlay').classList.remove('active');
-        });
-        document.getElementById('chartOverlay').addEventListener('click', (e) => {
-          if (e.target === document.getElementById('chartOverlay')) {
-            document.getElementById('chartOverlay').classList.remove('active');
-          }
-        });
-      }
-
-      // Инициализация
-      createDots();
+      slides = document.querySelectorAll('.slide');
       showSlide(0);
       initCharts();
       setupChartTabs();
       setupToggleView();
       setupFullscreenCharts();
+      createDots();
+      updateLoadingBar();
     });
+
+    // Отображение слайда
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= slides.length) index = slides.length - 1;
+      current = index;
+      slides.forEach(slide => slide.classList.remove('active'));
+      slides[current].classList.add('active');
+      updateDots();
+      updateLoadingBar();
+    }
+
+    // Создание индикаторов
+    function createDots() {
+      const dotsContainer = document.getElementById('dots');
+      dotsContainer.innerHTML = '';
+      slides.forEach((slide, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === current ? ' active' : '');
+        const heading = slide.querySelector('h1, h2');
+        const tooltipText = heading ? heading.textContent : `Слайд ${i+1}`;
+        if (window.innerWidth > 768) {
+          dot.setAttribute('data-tooltip', tooltipText);
+        }
+        dot.onclick = () => showSlide(i);
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    // Обновление индикаторов
+    function updateDots() {
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+    }
+
+    // Прогресс-бар
+    function updateLoadingBar() {
+      const progress = (current / (slides.length - 1)) * 100;
+      document.getElementById('loadingBar').style.width = progress + '%';
+    }
+
+    // Обработка клавиш
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+    });
+
+    // Переключение вкладок графиков
+    function setupChartTabs() {
+      document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const target = tab.getAttribute('data-target');
+          const tabGroup = tab.parentElement;
+          tabGroup.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          document.querySelectorAll('.chart-view').forEach(view => {
+            view.classList.remove('active');
+          });
+          document.getElementById(target).classList.add('active');
+        });
+      });
+    }
+
+    // Переключение представлений
+    function setupToggleView() {
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-target');
+          btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.view-container').forEach(container => {
+            container.classList.remove('active');
+          });
+          document.getElementById(target).classList.add('active');
+        });
+      });
+    }
+
+    // Полноэкранный режим графиков
+    function setupFullscreenCharts() {
+      document.querySelectorAll('.fullscreen-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const chartId = btn.getAttribute('data-chart');
+          const originalCanvas = document.getElementById(chartId);
+          if (Chart.getChart(chartId)) {
+            const chartConfig = Chart.getChart(chartId).config;
+            const overlayContainer = document.getElementById('overlayChartContainer');
+            overlayContainer.innerHTML = '';
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'overlayChart';
+            overlayContainer.appendChild(newCanvas);
+            new Chart(newCanvas, chartConfig);
+            document.getElementById('chartOverlay').classList.add('active');
+          }
+        });
+      });
+      document.getElementById('closeOverlay').addEventListener('click', () => {
+        document.getElementById('chartOverlay').classList.remove('active');
+      });
+      document.getElementById('chartOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('chartOverlay')) {
+          document.getElementById('chartOverlay').classList.remove('active');
+        }
+      });
+    }
+
+    // Инициализация графиков
+    function initCharts() {
+      document.querySelectorAll('.chart-container').forEach(container => {
+        const loader = document.createElement('div');
+        loader.className = 'chart-loader';
+        container.appendChild(loader);
+      });
+
+      Chart.defaults.font.family = 'Roboto, sans-serif';
+      Chart.defaults.color = '#002D6B';
+
+      // График выручки (линейный)
+      new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          datasets: [{
+            label: 'Выручка, млн руб.',
+            data: [100, 110, 130, 145, 160, 180, 200],
+            borderColor: '#00A8E8',
+            backgroundColor: 'rgba(0, 168, 232, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#00A8E8',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              titleFont: { weight: 'bold' },
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + ' млн руб.';
+                }
+              }
+            },
+            datalabels: {
+              color: '#002D6B',
+              anchor: 'end',
+              align: 'top',
+              formatter: function(value) {
+                return value + ' млн';
+              },
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Млн рублей'
+              }
+            }
+          }
+        }
+      });
+
+      // График выручки (столбчатый)
+      new Chart(document.getElementById('revenueBarChart'), {
+        type: 'bar',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          datasets: [{
+            label: 'Выручка, млн руб.',
+            data: [100, 110, 130, 145, 160, 180, 200],
+            backgroundColor: '#00A8E8',
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + ' млн руб.';
+                }
+              }
+            },
+            datalabels: {
+              color: '#002D6B',
+              anchor: 'end',
+              align: 'top',
+              formatter: function(value) {
+                return value;
+              },
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Млн рублей'
+              }
+            }
+          }
+        }
+      });
+
+      // График EBITDA (столбчатый)
+      new Chart(document.getElementById('ebitdaChart'), {
+        type: 'bar',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          datasets: [{
+            label: 'EBITDA, млн руб.',
+            data: [12, 15, 18, 20, 24, 28, 30],
+            backgroundColor: '#00A8E8',
+            borderRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + ' млн руб.';
+                }
+              }
+            },
+            datalabels: {
+              color: '#002D6B',
+              anchor: 'end',
+              align: 'top',
+              formatter: function(value) {
+                return value;
+              },
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Млн рублей'
+              }
+            }
+          }
+        }
+      });
+
+      // График EBITDA (линейный)
+      new Chart(document.getElementById('ebitdaLineChart'), {
+        type: 'line',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          datasets: [{
+            label: 'EBITDA, млн руб.',
+            data: [12, 15, 18, 20, 24, 28, 30],
+            borderColor: '#00A8E8',
+            backgroundColor: 'rgba(0, 168, 232, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#00A8E8',
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + ' млн руб.';
+                }
+              }
+            },
+            datalabels: {
+              color: '#002D6B',
+              anchor: 'end',
+              align: 'top',
+              formatter: function(value) {
+                return value + ' млн';
+              },
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Млн рублей'
+              }
+            }
+          }
+        }
+      });
+
+      // Круговой график разбивки по направлениям
+      new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Складская логистика', 'Транспортная логистика'],
+          datasets: [{
+            data: [65, 35],
+            backgroundColor: ['#002D6B', '#00A8E8'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '50%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                font: {
+                  size: 14
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': ' + context.raw + '%';
+                }
+              }
+            },
+            datalabels: {
+              color: '#fff',
+              formatter: function(value) {
+                return value + '%';
+              },
+              font: {
+                weight: 'bold',
+                size: 16
+              }
+            }
+          }
+        }
+      });
+
+      // График тренда по направлениям
+      new Chart(document.getElementById('directionTrendChart'), {
+        type: 'line',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          datasets: [
+            {
+              label: 'Складская логистика',
+              data: [60, 62, 63, 64, 65, 65, 65],
+              borderColor: '#002D6B',
+              backgroundColor: 'rgba(0, 45, 107, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Транспортная логистика',
+              data: [40, 38, 37, 36, 35, 35, 35],
+              borderColor: '#00A8E8',
+              backgroundColor: 'rgba(0, 168, 232, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Доля в выручке, %',
+                max: 100
+              }
+            }
+          }
+        }
+      });
+
+      // График сравнения с отраслью
+      new Chart(document.getElementById('industryComparisonChart'), {
+        type: 'radar',
+        data: {
+          labels: ['Рост выручки', 'Маржинальность', 'Эффективность', 'Инновации', 'Клиентский сервис'],
+          datasets: [
+            {
+              label: 'BG LOGISTIC',
+              data: [85, 80, 75, 90, 85],
+              backgroundColor: 'rgba(0, 168, 232, 0.2)',
+              borderColor: '#00A8E8',
+              pointBackgroundColor: '#00A8E8',
+              pointRadius: 4
+            },
+            {
+              label: 'Среднее по отрасли',
+              data: [70, 65, 60, 65, 70],
+              backgroundColor: 'rgba(0, 45, 107, 0.2)',
+              borderColor: '#002D6B',
+              pointBackgroundColor: '#002D6B',
+              pointRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { display: true },
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
+          },
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      // График маржинальности
+      new Chart(document.getElementById('marginChart'), {
+        type: 'line',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          datasets: [
+            {
+              label: 'Рентабельность продаж, %',
+              data: [8, 8.5, 9, 10, 10.5, 11.5, 12],
+              borderColor: '#002D6B',
+              backgroundColor: 'rgba(0, 45, 107, 0.1)',
+              tension: 0.4,
+              fill: true,
+              yAxisID: 'y'
+            },
+            {
+              label: 'EBITDA Margin, %',
+              data: [12, 13.6, 13.8, 13.8, 15, 15.6, 15],
+              borderColor: '#00A8E8',
+              backgroundColor: 'rgba(0, 168, 232, 0.1)',
+              tension: 0.4,
+              fill: true,
+              yAxisID: 'y'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Процент, %',
+                max: 20
+              }
+            }
+          }
+        }
+      });
+
+      // График структуры затрат
+      new Chart(document.getElementById('costChart'), {
+        type: 'bar',
+        data: {
+          labels: ['2016', '2022'],
+          datasets: [
+            {
+              label: 'Персонал',
+              data: [35, 30],
+              backgroundColor: '#002D6B'
+            },
+            {
+              label: 'Аренда',
+              data: [25, 20],
+              backgroundColor: '#00A8E8'
+            },
+            {
+              label: 'Транспорт',
+              data: [20, 25],
+              backgroundColor: '#4CAF50'
+            },
+            {
+              label: 'ИТ и автоматизация',
+              data: [5, 15],
+              backgroundColor: '#FFC107'
+            },
+            {
+              label: 'Прочие расходы',
+              data: [15, 10],
+              backgroundColor: '#9C27B0'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              title: {
+                display: true,
+                text: 'Год'
+              }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Доля в структуре затрат, %',
+                max: 100
+              }
+            }
+          }
+        }
+      });
+
+      // График прогноза
+      new Chart(document.getElementById('forecastChart'), {
+        type: 'line',
+        data: {
+          labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023*', '2024*'],
+          datasets: [{
+            label: 'Выручка, млн руб.',
+            data: [100, 110, 130, 145, 160, 180, 200, 230, 260],
+            borderColor: '#00A8E8',
+            backgroundColor: 'rgba(0, 168, 232, 0.1)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: function(context) {
+              return context.dataIndex > 6 ? '#FFC107' : '#00A8E8';
+            },
+            pointRadius: function(context) {
+              return context.dataIndex > 6 ? 6 : 5;
+            },
+            pointStyle: function(context) {
+              return context.dataIndex > 6 ? 'triangle' : 'circle';
+            }
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.raw + ' млн руб.' + (context.dataIndex > 6 ? ' (прогноз)' : '');
+                }
+              }
+            },
+            datalabels: {
+              color: function(context) {
+                return context.dataIndex > 6 ? '#FFC107' : '#002D6B';
+              },
+              anchor: 'end',
+              align: 'top',
+              formatter: function(value, context) {
+                return value + (context.dataIndex > 6 ? '*' : '');
+              },
+              font: { weight: 'bold' }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Млн рублей'
+              }
+            }
+          }
+        }
+      });
+
+      // График стратегии
+      new Chart(document.getElementById('strategyChart'), {
+        type: 'polarArea',
+        data: {
+          labels: ['Рост выручки', 'Повышение маржинальности', 'Расширение географии', 'Новые услуги', 'Цифровизация'],
+          datasets: [{
+            data: [30, 25, 15, 10, 20],
+            backgroundColor: [
+              '#00A8E8',
+              '#002D6B',
+              '#4CAF50',
+              '#FFC107',
+              '#9C27B0'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right' },
+            tooltip: {
+              backgroundColor: 'rgba(0, 45, 107, 0.8)',
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': ' + context.raw + ' % приоритета';
+                }
+              }
+            },
+            datalabels: {
+              color: '#fff',
+              formatter: function(value) {
+                return value + '%';
+              },
+              font: { weight: 'bold' }
+            }
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>
