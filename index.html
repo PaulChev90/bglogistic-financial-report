@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BG LOGISTIC — Финансовая деятельность 2016–2022</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
   <style>
     :root {
       --primary: #002D6B;
@@ -33,10 +34,11 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 40px 20px;
+      padding: 60px 20px;
       text-align: center;
       position: relative;
       scroll-snap-align: start;
+      transition: background-color 0.5s ease;
     }
 
     .slide:nth-child(even) {
@@ -49,7 +51,7 @@
     }
 
     p {
-      max-width: 800px;
+      max-width: 900px;
       font-size: 1.1rem;
       line-height: 1.6;
     }
@@ -58,13 +60,53 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      width: 120px;
+      width: 140px;
+      opacity: 0.9;
+    }
+
+    .nav-btn {
+      position: fixed;
+      bottom: 20px;
+      z-index: 10;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .nav-prev {
+      left: 20px;
+    }
+
+    .nav-next {
+      right: 20px;
+    }
+
+    .nav-btn:hover {
+      background: #0077b6;
+    }
+
+    .chart-container {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 30px;
+    }
+
+    canvas {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
 
     .timeline {
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      gap: 20px;
       max-width: 800px;
       margin-top: 40px;
     }
@@ -78,39 +120,17 @@
       padding: 15px 20px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+    }
+
+    .event:hover {
+      transform: translateX(5px);
     }
 
     .year {
       font-weight: bold;
       color: var(--accent);
       min-width: 60px;
-    }
-
-    .chart {
-      margin-top: 30px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-    }
-
-    .bar {
-      height: 120px;
-      width: 30px;
-      background: var(--accent);
-      margin: 0 5px;
-      position: relative;
-      transition: all 0.4s ease-in-out;
-    }
-
-    .bar::after {
-      content: attr(data-value);
-      position: absolute;
-      bottom: -25px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.9rem;
-      white-space: nowrap;
     }
 
     .card {
@@ -121,6 +141,11 @@
       max-width: 300px;
       margin: 10px;
       text-align: left;
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
     }
 
     .card h3 {
@@ -153,10 +178,28 @@
       padding: 20px;
     }
 
+    .dot-indicator {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      background: #ccc;
+      border-radius: 50%;
+      transition: background 0.3s;
+    }
+
+    .dot.active {
+      background: var(--accent);
+    }
+
     @media (max-width: 600px) {
-      .timeline {
-        gap: 20px;
-      }
       .event {
         flex-direction: column;
         align-items: flex-start;
@@ -168,9 +211,12 @@
   </style>
 </head>
 <body>
+
+  <!-- Логотип -->
+  <img src="https://bg-logistic.ru/wp-content/uploads/2023/10/logo.svg " alt="BG LOGISTIC" class="logo"/>
+
   <!-- Титульный слайд -->
   <section class="slide">
-    <img src="https://bg-logistic.ru/wp-content/uploads/2023/10/logo.svg " alt="Логотип BG LOGISTIC" class="logo" />
     <h1>Финансовая деятельность BG LOGISTIC</h1>
     <p>Аналитическая презентация за период 2016–2022 гг.</p>
     <p><em>Подготовлено для Генерального директора</em></p>
@@ -179,7 +225,7 @@
   <!-- Executive Summary -->
   <section class="slide">
     <h2>Executive Summary</h2>
-    <div class="chart">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
       <div class="card">
         <h3>Выручка, млн руб</h3>
         <p>Рост на +120%</p>
@@ -214,25 +260,34 @@
     </div>
   </section>
 
-  <!-- Динамика выручки и EBITDA -->
+  <!-- Динамика выручки -->
   <section class="slide">
-    <h2>Динамика выручки и EBITDA</h2>
-    <div class="chart">
-      <div class="bar" data-value="100"></div>
-      <div class="bar" data-value="120"></div>
-      <div class="bar" data-value="145"></div>
-      <div class="bar" data-value="160"></div>
-      <div class="bar" data-value="180"></div>
-      <div class="bar" data-value="210"></div>
-      <div class="bar" data-value="220"></div>
+    <h2>Динамика выручки (2016–2022)</h2>
+    <div class="chart-container">
+      <canvas id="revenueChart"></canvas>
     </div>
-    <p>Выручка росла стабильно, особенно после внедрения WMS в 2020 году.</p>
+  </section>
+
+  <!-- EBITDA -->
+  <section class="slide">
+    <h2>EBITDA по годам</h2>
+    <div class="chart-container">
+      <canvas id="ebitdaChart"></canvas>
+    </div>
+  </section>
+
+  <!-- Разбивка по направлениям -->
+  <section class="slide">
+    <h2>Разбивка по направлениям</h2>
+    <div class="chart-container">
+      <canvas id="pieChart"></canvas>
+    </div>
   </section>
 
   <!-- Рентабельность и маржинальность -->
   <section class="slide">
     <h2>Рентабельность и маржинальность</h2>
-    <div class="chart">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
       <div class="card">
         <h3>Рентабельность продаж</h3>
         <p>С 8% до 12%</p>
@@ -247,53 +302,6 @@
       </div>
     </div>
     <p>Ключевые изменения связаны с оптимизацией логистики и автоматизацией.</p>
-  </section>
-
-  <!-- Разбивка по направлениям -->
-  <section class="slide">
-    <h2>Разбивка по направлениям</h2>
-    <div class="chart">
-      <div class="card">
-        <h3>Складская логистика</h3>
-        <p>~65% от общей выручки</p>
-      </div>
-      <div class="card">
-        <h3>Транспортная логистика</h3>
-        <p>~35% от общей выручки</p>
-      </div>
-    </div>
-    <p>Складское направление остается основным драйвером роста.</p>
-  </section>
-
-  <!-- Факторный анализ -->
-  <section class="slide">
-    <h2>Факторный анализ роста</h2>
-    <ul style="text-align:left;max-width:800px;margin:auto;">
-      <li>✅ Внедрение WMS – +20% к эффективности</li>
-      <li>✅ Оптимизация затрат – снижение издержек на 15%</li>
-      <li>✅ Расширение клиентской базы – +30% новых заказов</li>
-      <li>⚠️ Влияние инфляции – негативный эффект ~5%</li>
-    </ul>
-  </section>
-
-  <!-- План vs Факт -->
-  <section class="slide">
-    <h2>План vs Факт</h2>
-    <div class="chart">
-      <div class="card">
-        <h3>Выручка</h3>
-        <p>Факт: 102% от плана</p>
-      </div>
-      <div class="card">
-        <h3>EBITDA</h3>
-        <p>Факт: 105% от плана</p>
-      </div>
-      <div class="card">
-        <h3>Затраты</h3>
-        <p>Факт: 98% от плана</p>
-      </div>
-    </div>
-    <p>Показатели превышают плановые значения по ключевым метрикам.</p>
   </section>
 
   <!-- Подготовка к 2023–2024 -->
@@ -316,6 +324,127 @@
       <li>🤖 Дальнейшая автоматизация</li>
     </ul>
   </section>
+
+  <!-- Навигация -->
+  <button class="nav-btn nav-prev" onclick="prevSlide()">Назад</button>
+  <button class="nav-btn nav-next" onclick="nextSlide()">Вперед</button>
+
+  <!-- Индикатор слайдов -->
+  <div class="dot-indicator" id="dots"></div>
+
+  <!-- Скрипты -->
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let current = 0;
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.style.display = i === index ? 'flex' : 'none';
+      });
+      updateDots();
+    }
+
+    function nextSlide() {
+      if (current < slides.length - 1) current++;
+      showSlide(current);
+    }
+
+    function prevSlide() {
+      if (current > 0) current--;
+      showSlide(current);
+    }
+
+    function createDots() {
+      const dotsContainer = document.getElementById('dots');
+      slides.forEach((_, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => {
+          current = i;
+          showSlide(current);
+        };
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === current);
+      });
+    }
+
+    // Диаграммы
+    new Chart(document.getElementById('revenueChart'), {
+      type: 'line',
+      data: {
+        labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+        datasets: [{
+          label: 'Выручка, млн руб.',
+          data: [100, 110, 130, 145, 160, 180, 200],
+          borderColor: '#00A8E8',
+          backgroundColor: 'rgba(0, 168, 232, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {}
+        }
+      }
+    });
+
+    new Chart(document.getElementById('ebitdaChart'), {
+      type: 'bar',
+      data: {
+        labels: ['2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+        datasets: [{
+          label: 'EBITDA, млн руб.',
+          data: [12, 15, 18, 20, 24, 28, 30],
+          backgroundColor: '#00A8E8'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {}
+        }
+      }
+    });
+
+    new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Складская логистика', 'Транспортная логистика'],
+        datasets: [{
+          data: [65, 35],
+          backgroundColor: ['#002D6B', '#00A8E8']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+
+    // Инициализация
+    createDots();
+    showSlide(current);
+
+    // Управление колесом мыши
+    window.addEventListener('wheel', e => {
+      if (e.deltaY > 0) nextSlide();
+      else if (e.deltaY < 0) prevSlide();
+    });
+  </script>
 
   <footer>
     &copy; 2025 BG LOGISTIC | Презентация подготовлена ИИ-экспертом
